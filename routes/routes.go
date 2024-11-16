@@ -1,8 +1,8 @@
 package routes
 
 import (
+	"github.com/Rohit-Prasanna/todo/handlers"
 	"github.com/gin-gonic/gin"
-	"todo/handlers"
 )
 
 func InitializeRoutes(r *gin.Engine) {

@@ -1,8 +1,8 @@
 package main
 
 import (
+	"github.com/Rohit-Prasanna/todo/routes"
 	"github.com/gin-gonic/gin"
-	"todo/routes"
 )
 
 func main() {
@@ -12,5 +12,8 @@ func main() {
 	routes.InitializeRoutes(r)
 
 	// Start the server
-	r.Run(":8080") // Runs on localhost:8080
+	err := r.Run(":8080")
+	if err != nil {
+		return
+	} // Runs on localhost:8080
 }
