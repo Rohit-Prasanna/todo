@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/Rohit-Prasanna/todo/db"
+	_ "github.com/Rohit-Prasanna/todo/db"
 	"github.com/Rohit-Prasanna/todo/models"
 	"net/http"
 	"time"
@@ -19,7 +20,7 @@ func GetTodos(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	userID := params["userId"]
 
-	collection := database.GetCollection("todos")
+	collection := db.GetCollection("todos")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -51,7 +52,7 @@ func CreateTodo(w http.ResponseWriter, r *http.Request) {
 	}
 	todo.ID = primitive.NewObjectID()
 
-	collection := database.GetCollection("todos")
+	collection := db.GetCollection("todos")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -80,7 +81,7 @@ func UpdateTodo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	collection := database.GetCollection("todos")
+	collection := db.GetCollection("todos")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -105,7 +106,7 @@ func DeleteTodo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	collection := database.GetCollection("todos")
+	collection := db.GetCollection("todos")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
