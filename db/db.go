@@ -16,7 +16,7 @@ func ConnectDB() error {
 	defer cancel()
 
 	var err error
-	Client, err = mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017"))
+	Client, err = mongo.Connect(ctx, options.Client().ApplyURI("mongodb+srv://Rohit-todo:1YWXMEgBEy8VKaTb@cluster0.l3ra7.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"))
 	return err
 }
 
@@ -25,7 +25,10 @@ func DisconnectDB() {
 	if Client != nil {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
-		Client.Disconnect(ctx)
+		err := Client.Disconnect(ctx)
+		if err != nil {
+			return
+		}
 	}
 }
 
