@@ -1,19 +1,23 @@
 package main
 
 import (
+	"github.com/Rohit-Prasanna/todo/db"
 	"github.com/Rohit-Prasanna/todo/routes"
-	"github.com/gin-gonic/gin"
+	"log"
+	"net/http"
 )
 
 func main() {
-	r := gin.Default()
+	// Connect to MongoDB
+	if err := db.ConnectDB(); err != nil {
+		log.Fatal("Failed to connect to the database:", err)
+	}
+	defer db.DisconnectDB()
 
 	// Initialize routes
-	routes.InitializeRoutes(r)
+	router := routes.InitRoutes()
 
 	// Start the server
-	err := r.Run(":8080")
-	if err != nil {
-		return
-	} // Runs on localhost:8080
+	log.Println("Server is running on http://localhost:8080")
+	log.Fatal(http.ListenAndServe(":8080", router))
 }
