@@ -9,6 +9,7 @@ import (
 
 func main() {
 	// Connect to MongoDB
+
 	if err := db.ConnectDB(); err != nil {
 		log.Fatal("Failed to connect to the database:", err)
 	}
@@ -16,8 +17,9 @@ func main() {
 
 	// Initialize routes
 	router := routes.InitRoutes()
-
-	// Start the server
 	log.Println("Server is running on http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", router))
+
+	// Start the server
+
 }

@@ -61,7 +61,6 @@ func CreateTodo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Assign a new ObjectID and timestamp to the todo
-	todo.ID = primitive.NewObjectID()
 	todo.CreatedAt = time.Now()
 	todo.UpdatedAt = time.Now()
 
@@ -150,4 +149,36 @@ func DeleteTodo(w http.ResponseWriter, r *http.Request) {
 
 	// Respond with a success message
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// Function to delete all todos by user ID (path parameter)
+func DeleteAllTodos(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	// Extract userId from the path parameters
+	vars := mux.Vars(r)
+	userID := vars["userId"]
+	if userID == "" {
+		http.Error(w, "userId is required", http.StatusBadRequest)
+		return
+	}
+
+	// Get MongoDB collection
+	collection := db.GetCollection("todos")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Delete all documents with the specified user ID
+	filter := bson.M{"userId": userID}
+	result, err := collection.DeleteMany(ctx, filter)
+	if err != nil {
+		http.Error(w, "Error deleting todos: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Respond with the number of deleted documents
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"message": "Todos deleted successfully",
+		"deleted": result.DeletedCount,
+	})
 }
