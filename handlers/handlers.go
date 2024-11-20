@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
 	"time"
 
@@ -32,7 +33,12 @@ func GetTodos(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to fetch todos: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	defer cursor.Close(ctx)
+	defer func(cursor *mongo.Cursor, ctx context.Context) {
+		err := cursor.Close(ctx)
+		if err != nil {
+
+		}
+	}(cursor, ctx)
 
 	var todos []models.Todo
 	if err := cursor.All(ctx, &todos); err != nil {
