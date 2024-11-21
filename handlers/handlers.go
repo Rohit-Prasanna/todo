@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"go.mongodb.org/mongo-driver/mongo"
+	"log"
 	"net/http"
 	"time"
 
@@ -11,7 +12,6 @@ import (
 	"github.com/Rohit-Prasanna/todo/models"
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // GetTodos retrieves all todos for a specific user
@@ -83,31 +83,29 @@ func CreateTodo(w http.ResponseWriter, r *http.Request) {
 func UpdateTodo(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	// Get the ID from URL parameters
+	// Get the ID from URL parameters (treat as plain string)
 	params := mux.Vars(r)
-	id, err := primitive.ObjectIDFromHex(params["id"])
-	if err != nil {
-		http.Error(w, "Invalid ID format: "+err.Error(), http.StatusBadRequest)
-		return
-	}
+	id := params["id"]
 
+	// Decode the updated todo from the request body
 	var updatedTodo models.Todo
 	if err := json.NewDecoder(r.Body).Decode(&updatedTodo); err != nil {
 		http.Error(w, "Invalid input: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	// Update timestamps
-	updatedTodo.UpdatedAt = time.Now()
+	// Ensure the ID in the decoded todo matches the route parameter
+	updatedTodo.ID = id
+	updatedTodo.UpdatedAt = time.Now() // Update timestamps
 
 	collection := db.GetCollection("todos")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Filter and update
+	// Filter and update using string ID
 	filter := bson.M{"_id": id}
 	update := bson.M{"$set": updatedTodo}
-	_, err = collection.UpdateOne(ctx, filter, update)
+	_, err := collection.UpdateOne(ctx, filter, update)
 	if err != nil {
 		http.Error(w, "Failed to update todo: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -121,19 +119,15 @@ func UpdateTodo(w http.ResponseWriter, r *http.Request) {
 func DeleteTodo(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	// Get the ID from URL parameters
+	// Get the ID from URL parameters (treat as plain string)
 	params := mux.Vars(r)
-	id, err := primitive.ObjectIDFromHex(params["id"])
-	if err != nil {
-		http.Error(w, "Invalid ID format: "+err.Error(), http.StatusBadRequest)
-		return
-	}
+	id := params["id"]
 
 	collection := db.GetCollection("todos")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Filter and delete
+	// Filter and delete using string ID
 	filter := bson.M{"_id": id}
 	result, err := collection.DeleteOne(ctx, filter)
 	if err != nil {
@@ -147,7 +141,7 @@ func DeleteTodo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Respond with a success message
+	// Respond with a success message (No Content status)
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -163,6 +157,9 @@ func DeleteAllTodos(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Log the received userId for debugging
+	log.Println("Received userId:", userID)
+
 	// Get MongoDB collection
 	collection := db.GetCollection("todos")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -172,13 +169,47 @@ func DeleteAllTodos(w http.ResponseWriter, r *http.Request) {
 	filter := bson.M{"userId": userID}
 	result, err := collection.DeleteMany(ctx, filter)
 	if err != nil {
+		log.Println("Error deleting todos:", err)
 		http.Error(w, "Error deleting todos: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	// Log the number of deleted documents
+	log.Printf("Deleted %d todos for userId: %s\n", result.DeletedCount, userID)
+
 	// Respond with the number of deleted documents
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"message": "Todos deleted successfully",
 		"deleted": result.DeletedCount,
+	})
+}
+func GetRemainingTodos(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	// Extract userId from the URL path
+	vars := mux.Vars(r)
+	userID := vars["userId"]
+	if userID == "" {
+		http.Error(w, "userId is required", http.StatusBadRequest)
+		return
+	}
+
+	// Get MongoDB collection
+	collection := db.GetCollection("todos")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Count todos where checked is false for the specified user
+	filter := bson.M{"userId": userID, "checked": false}
+	count, err := collection.CountDocuments(ctx, filter)
+	if err != nil {
+		http.Error(w, "Error counting todos: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Respond with the count of remaining todos
+	json.NewEncoder(w).Encode(map[string]int{
+		"remaining": int(count),
 	})
 }
