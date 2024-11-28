@@ -21,7 +21,7 @@ func main() {
 
 	// Configure CORS options
 	corsOptions := cors.Options{
-		AllowedOrigins:   []string{"http://127.0.0.1:5500", "https://rohit-prasanna.github.io/todo-list-withgo_backend/"}, // Replace with your frontend's URLs
+		AllowedOrigins:   []string{"http://127.0.0.1:5500", "https://rohit-prasanna.github.io/todo-list-withgo_backend/","https://rohit-prasanna.github.io"}, // Replace with your frontend's URLs
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 		AllowCredentials: true,
